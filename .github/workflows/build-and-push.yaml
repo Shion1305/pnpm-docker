@@ -1,0 +1,41 @@
+name: "Build and push pnpm image"
+on:
+  push:
+    branches:
+      - 'main'
+jobs:
+  filter-docker-tags:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.pick-tags.outputs.matrix }}
+    steps:
+      - name: pass the version
+        id: pick-tags
+        run: |
+          echo "matrix={\"node-tag\":[\"latest\",\"alpine\"],\"arch\":[\"\"]}" >> $GITHUB_OUTPUT
+  build-target-version:
+    runs-on: ubuntu-latest
+    needs: filter-docker-tags
+    strategy:
+      matrix: ${{fromJson(needs.filter-docker-tags.outputs.matrix)}}
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+      - name: Create Dockerfile
+        run: |
+          sed "s/{{ .NodeTag }}/${{ matrix.node-tag }}/g" template/Dockerfile > Dockerfile
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: shion1305/pnpm:${{ matrix.node-tag }}
+          file: ./Dockerfile
+          context: ./
+          platforms: linux/amd64,linux/arm64
