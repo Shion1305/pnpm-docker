@@ -11,13 +11,16 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
+      fetch-depth: 0
 
     - name: Get changed directories
       id: get-changes
       run: |
+        BEFORE_COMMIT=${{ github.event.before }}
+        CURRENT_COMMIT=${{ github.sha }}
         # Get the list of changed directories under the images folder
-        CHANGED_DIRS=$(git diff --name-only HEAD~1 HEAD | grep '^images/' | cut -d/ -f2 | sort | uniq)
+        CHANGED_DIRS=$(git diff --name-only $BEFORE_COMMIT $CURRENT_COMMIT | grep '^images/' | cut -d/ -f2 | sort | uniq)
         echo "Changed directories: $CHANGED_DIRS"
         # Convert the list to JSON array format
         TAGS=$(printf '%s\n' "$CHANGED_DIRS" | jq -R . | jq -s .)
