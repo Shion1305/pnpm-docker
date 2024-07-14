@@ -30,6 +30,7 @@ jobs:
           # Convert the list to JSON array format
           TAGS=$(printf '%s\n' "$CHANGED_DIRS" | jq -R . | jq -s .)
         fi
+        echo "tags=$TAGS"
         echo "tags=$TAGS" >> $GITHUB_OUTPUT
 
   build-and-push:
