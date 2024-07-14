@@ -4,38 +4,47 @@ on:
     branches:
       - 'main'
 jobs:
-  filter-docker-tags:
+  find-changed-dirs:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.pick-tags.outputs.matrix }}
+      tags: ${{ steps.get-changes.outputs.tags }}
+
     steps:
-      - name: pass the version
-        id: pick-tags
-        run: |
-          echo "matrix={\"node-tag\":[\"latest\",\"alpine\"],\"arch\":[\"\"]}" >> $GITHUB_OUTPUT
-  build-target-version:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Get changed directories
+      id: get-changes
+      run: |
+        # Get the list of changed directories under the images folder
+        CHANGED_DIRS=$(git diff --name-only HEAD~1 HEAD | grep '^images/' | cut -d/ -f2 | sort | uniq)
+        echo "Changed directories: $CHANGED_DIRS"
+        # Convert the list to JSON array format
+        TAGS=$(printf '%s\n' "$CHANGED_DIRS" | jq -R . | jq -s .)
+        echo "tags=$TAGS" >> $GITHUB_OUTPUT
+
+  build-and-push:
     runs-on: ubuntu-latest
-    needs: filter-docker-tags
+    needs: find-changed-dirs
     strategy:
-      matrix: ${{fromJson(needs.filter-docker-tags.outputs.matrix)}}
+      matrix:
+        tag: ${{ fromJson(needs.find-changed-dirs.outputs.tags) }}
+
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v2
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
-      - name: Create Dockerfile
-        run: |
-          sed "s/{{ .NodeTag }}/${{ matrix.node-tag }}/g" template/Dockerfile > Dockerfile
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           push: true
           tags: shion1305/pnpm:${{ matrix.node-tag }}
           file: ./Dockerfile
-          context: ./
+          context: ./images/${{ matrix.tag }}
           platforms: linux/amd64,linux/arm64
