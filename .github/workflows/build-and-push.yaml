@@ -23,8 +23,13 @@ jobs:
         # Get the list of changed directories under the images folder
         CHANGED_DIRS=$(git diff --name-only $BEFORE_COMMIT $CURRENT_COMMIT | grep '^images/' | cut -d/ -f2 | sort | uniq)
         echo "Changed directories: $CHANGED_DIRS"
-        # Convert the list to JSON array format
-        TAGS=$(printf '%s\n' "$CHANGED_DIRS" | jq -R . | jq -s .)
+        # if there are no changes, set an empty array
+        if [ -z "$CHANGED_DIRS" ]; then
+          TAGS="[]"
+        else
+          # Convert the list to JSON array format
+          TAGS=$(printf '%s\n' "$CHANGED_DIRS" | jq -R . | jq -s .)
+        fi
         echo "tags=$TAGS" >> $GITHUB_OUTPUT
 
   build-and-push:
