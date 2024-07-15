@@ -28,7 +28,9 @@ jobs:
           TAGS="[]"
         else
           # Convert the list to JSON array format
-          TAGS=$(printf '%s\n' "$CHANGED_DIRS" | jq -R . | jq -sc .)
+          EXISTING_DIRS=$(find images -type d -mindepth 1 -maxdepth 1 | cut -d/ -f2 | sort | uniq)
+          FILTERED_DIRS=$(comm -12 <(echo "$CHANGED_DIRS") <(echo "$EXISTING_DIRS"))
+          TAGS=$(printf '%s\n' "$FILTERED_DIRS" | jq -R . | jq -sc .)
         fi
         echo "tags=$TAGS"
         echo "tags=$TAGS" >> $GITHUB_OUTPUT
