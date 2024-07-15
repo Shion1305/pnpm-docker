@@ -54,7 +54,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: shion1305/pnpm:${{ matrix.node-tag }}
+          tags: shion1305/pnpm:${{ matrix.tag }}
           file: ./Dockerfile
           context: ./images/${{ matrix.tag }}
           platforms: linux/amd64,linux/arm64
