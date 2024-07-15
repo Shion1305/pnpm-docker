@@ -28,7 +28,7 @@ jobs:
           TAGS="[]"
         else
           # Convert the list to JSON array format
-          TAGS=$(printf '%s\n' "$CHANGED_DIRS" | jq -R . | jq -s .)
+          TAGS=$(printf '%s\n' "$CHANGED_DIRS" | jq -R . | jq -sc .)
         fi
         echo "tags=$TAGS" >> $GITHUB_OUTPUT
 
