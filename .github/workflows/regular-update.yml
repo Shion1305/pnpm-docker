@@ -32,6 +32,4 @@ jobs:
           base: "main"
           author: "Automation By Shion1305<bot@github.shion.pro>"
           labels: "automated-updates"
-          assignees: "Shion1305"
           reviewers: "Shion1305"
-          signoff: true
