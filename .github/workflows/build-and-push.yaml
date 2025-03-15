@@ -9,7 +9,6 @@ on:
 jobs:
   build-test-push-images:
     strategy:
-      max-parallel: 2
       fail-fast: false
       matrix:
         tag: ["22", "22-alpine"]
@@ -31,9 +30,9 @@ jobs:
           password: ${{ secrets.DOCKER_TOKEN }}
       - name: Push Docker Image
         run: |
-          if [ "ubuntu-24.04" == "ubuntu-24.04" ]; then
+          if [ ${{ matrix.runner }} == "ubuntu-24.04" ]; then
             export ARCH=amd64;
-          elif [ "ubuntu-24.04" == "ubuntu-24.04-arm" ]; then
+          elif [ ${{ matrix.runner }} == "ubuntu-24.04-arm" ]; then
             export ARCH=arm64;
           else
             echo "Unknown runner";
