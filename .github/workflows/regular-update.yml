@@ -30,6 +30,6 @@ jobs:
           body: "This PR updates the images to reflect the latest node releases."
           branch: "ci-auto-update"
           base: "main"
+          committer: "Automation By Shion1305<bot@github.shion.pro>"
           author: "Automation By Shion1305<bot@github.shion.pro>"
           labels: "automated-updates"
-          reviewers: "Shion1305"
