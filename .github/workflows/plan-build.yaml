@@ -58,3 +58,20 @@ jobs:
                 body: `Following images will be built and pushed: \n${tags.map(tag => `- ${tag}`).join('\n')}`
               });
             }
+  build-test-images:
+    needs: find-changed-dirs
+    strategy:
+      fail-fast: true
+      matrix:
+        tag: ${{ fromJson(needs.find-changed-dirs.outputs.tags) }}
+        runner: ["ubuntu-24.04", "ubuntu-24.04-arm"]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Build Docker image
+        run: |
+          docker build -t pnpm-image:latest ./images/${{ matrix.tag }}
+      - name: Building Sample Application
+        run: |
+          docker build -f ./sample-app/Dockerfile ./sample-app/next-app
