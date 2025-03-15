@@ -18,7 +18,7 @@ jobs:
     - name: Get changed directories
       id: get-changes
       run: |
-        BEFORE_COMMIT=${{ github.event.before }}
+        BEFORE_COMMIT=$(git rev-parse origin/main)
         CURRENT_COMMIT=${{ github.sha }}
         # Get the list of changed directories under the images folder
         CHANGED_DIRS=$(git diff --name-only $BEFORE_COMMIT $CURRENT_COMMIT | grep '^images/' | cut -d/ -f2 | sort | uniq)
