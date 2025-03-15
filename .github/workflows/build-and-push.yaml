@@ -24,7 +24,6 @@ jobs:
           push: false
           tags: pnpm-image:${{ matrix.tag }}
           context: ./images/${{ matrix.tag }}
-          platforms: linux/amd64,linux/arm64
       - name: Building Sample Application
         run: |
           docker build -f ./sample-app/Dockerfile ./sample-app/next-app
