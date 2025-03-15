@@ -5,22 +5,26 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
+
+	"github.com/Shion1305/pnpm-docker/pkg/docker"
 )
 
 const templateFilePath = "./template/Dockerfile"
 
 type TemplateData struct {
-	NodeTag string
+	NodeTag            string
+	RequireWgetInstall bool
 }
 
-func GenDockerfile(nodeTag, digest string) error {
+func GenDockerfile(nodeTag string, digest docker.DigestInfo) error {
 	tmpl, err := template.ParseFiles(templateFilePath)
 	if err != nil {
 		return fmt.Errorf("error parsing template file: %v", err)
 	}
-
-	data := TemplateData{NodeTag: nodeTag}
+	wgetInstall := strings.Contains(nodeTag, "slim")
+	data := TemplateData{NodeTag: nodeTag, RequireWgetInstall: wgetInstall}
 	outputDir := filepath.Join("./images", nodeTag)
 	err = os.MkdirAll(outputDir, 0755)
 	if err != nil {
@@ -40,15 +44,28 @@ func GenDockerfile(nodeTag, digest string) error {
 	}
 	writer.Flush()
 
-	// write digest to file
-	digestFilePath := filepath.Join(outputDir, "digest")
-	digestFile, err := os.Create(digestFilePath)
-	if err != nil {
-		return fmt.Errorf("error creating digest file: %v", err)
+	if digest.AMD64 != "" {
+		if err := writeOutDigest(outputDir, "amd64", digest.AMD64); err != nil {
+			return fmt.Errorf("error writing out digest for %s:%s, %v", nodeTag, "amd64", err)
+		}
 	}
-	defer digestFile.Close()
-	if _, err := digestFile.WriteString(digest); err != nil {
-		return fmt.Errorf("error writing digest to file: %v", err)
+	if digest.ARM64 != "" {
+		if err := writeOutDigest(outputDir, "arm64", digest.ARM64); err != nil {
+			return fmt.Errorf("error writing out digest for %s:%s, %v", nodeTag, "arm64", err)
+		}
+	}
+	return nil
+}
+
+func writeOutDigest(outputDir, arch string, digest string) error {
+	outputFilePath := filepath.Join(outputDir, fmt.Sprintf("node-digest-%s", arch))
+	outputFile, err := os.Create(outputFilePath)
+	if err != nil {
+		return fmt.Errorf("error creating output file: %v", err)
+	}
+	defer outputFile.Close()
+	if _, err := outputFile.WriteString(digest + "\n"); err != nil {
+		return fmt.Errorf("error writing content to file: %v", err)
 	}
 	return nil
 }
