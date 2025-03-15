@@ -41,7 +41,7 @@ func GenDockerfile(nodeTag, digest string) error {
 	writer.Flush()
 
 	// write digest to file
-	digestFilePath := filepath.Join(outputDir, "digest")
+	digestFilePath := filepath.Join(outputDir, "node-digest")
 	digestFile, err := os.Create(digestFilePath)
 	if err != nil {
 		return fmt.Errorf("error creating digest file: %v", err)

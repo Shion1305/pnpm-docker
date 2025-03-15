@@ -4,6 +4,7 @@ import (
 	"github.com/Shion1305/pnpm-docker/pkg/docker"
 	"github.com/Shion1305/pnpm-docker/pkg/template"
 	"regexp"
+	"strconv"
 )
 
 func main() {
@@ -14,10 +15,21 @@ func main() {
 
 	for k, v := range digests {
 		//	if k does not contain numbers
-		rg := regexp.MustCompile(`\d+`)
-		if rg.MatchString(k) {
+		if !tagCompatible(k) {
 			continue
 		}
 		template.GenDockerfile(k, v)
 	}
+}
+
+func tagCompatible(tag string) bool {
+	rg := regexp.MustCompile(`^(\d+)`)
+	if !rg.MatchString(tag) {
+		return false
+	}
+	majorVer, _ := strconv.Atoi(rg.FindString(tag))
+	if majorVer < 22 {
+		return false
+	}
+	return true
 }
