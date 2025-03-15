@@ -4,8 +4,8 @@ on:
     branches:
       - 'main'
   pull_request:
-    paths:
-      - './.github/workflows/build-and-push.yaml'
+    branches:
+      - 'main'
 jobs:
   find-changed-dirs:
     runs-on: ubuntu-latest
