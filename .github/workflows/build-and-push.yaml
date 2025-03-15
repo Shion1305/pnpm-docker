@@ -42,3 +42,21 @@ jobs:
           docker tag pnpm-image:latest ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}-$ARCH
           docker push ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}-${{ matrix.runner }}
           echo "digest=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}-${{ matrix.runner }})"
+  create-manifest:
+    needs: build-test-push-images
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        tag: ["22", "22-alpine"]
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+      - name: Create manifest
+        run:    |
+          docker manifest create ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }} \
+            ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}-amd64 \
+            ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}-arm64
+          docker manifest push ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}
