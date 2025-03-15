@@ -1,4 +1,4 @@
-name: "Build and push pnpm image"
+name: "Plan building pnpm image"
 on:
   pull_request:
     paths:
@@ -18,7 +18,7 @@ jobs:
     - name: Get changed directories
       id: get-changes
       run: |
-        BEFORE_COMMIT=${{ github.event.before }}
+        BEFORE_COMMIT=$(git rev-parse origin/main)
         CURRENT_COMMIT=${{ github.sha }}
         # Get the list of changed directories under the images folder
         CHANGED_DIRS=$(git diff --name-only $BEFORE_COMMIT $CURRENT_COMMIT | grep '^images/' | cut -d/ -f2 | sort | uniq)
@@ -58,3 +58,20 @@ jobs:
                 body: `Following images will be built and pushed: \n${tags.map(tag => `- ${tag}`).join('\n')}`
               });
             }
+  build-test-images:
+    needs: find-changed-dirs
+    strategy:
+      fail-fast: false
+      matrix:
+        tag: ${{ fromJson(needs.find-changed-dirs.outputs.tags) }}
+        runner: ["ubuntu-24.04", "ubuntu-24.04-arm"]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Build Docker image
+        run: |
+          docker build -t pnpm-image:latest ./images/${{ matrix.tag }}
+      - name: Building Sample Application
+        run: |
+          docker build -f ./sample-app/Dockerfile ./sample-app/next-app

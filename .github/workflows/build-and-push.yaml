@@ -18,46 +18,67 @@ jobs:
     - name: Get changed directories
       id: get-changes
       run: |
-        BEFORE_COMMIT=${{ github.event.before }}
+        BEFORE_COMMIT=$(git rev-parse origin/main)
         CURRENT_COMMIT=${{ github.sha }}
         # Get the list of changed directories under the images folder
         CHANGED_DIRS=$(git diff --name-only $BEFORE_COMMIT $CURRENT_COMMIT | grep '^images/' | cut -d/ -f2 | sort | uniq)
         echo "Changed directories: $CHANGED_DIRS"
-        # if there are no changes, set an empty array
-        if [ -z "$CHANGED_DIRS" ]; then
-          TAGS="[]"
-        else
-          # Convert the list to JSON array format
-          EXISTING_DIRS=$(find images -type d -mindepth 1 -maxdepth 1 | cut -d/ -f2 | sort | uniq)
-          FILTERED_DIRS=$(comm -12 <(echo "$CHANGED_DIRS") <(echo "$EXISTING_DIRS"))
-          TAGS=$(printf '%s\n' "$FILTERED_DIRS" | jq -R . | jq -sc .)
-        fi
+        # Convert the list to JSON array format
+        EXISTING_DIRS=$(find images -type d -mindepth 1 -maxdepth 1 | cut -d/ -f2 | sort | uniq)
+        FILTERED_DIRS=$(comm -12 <(echo "$CHANGED_DIRS") <(echo "$EXISTING_DIRS"))
+        TAGS=$(printf '%s\n' "$FILTERED_DIRS" | jq -R . | jq -sc .)
         echo "tags=$TAGS"
         echo "tags=$TAGS" >> $GITHUB_OUTPUT
-
-  build-and-push:
-    runs-on: ubuntu-latest
+  build-test-push-images:
     needs: find-changed-dirs
     strategy:
-      max-parallel: 2
       fail-fast: false
       matrix:
         tag: ${{ fromJson(needs.find-changed-dirs.outputs.tags) }}
-
+        runner: ["ubuntu-24.04", "ubuntu-24.04-arm"]
+    runs-on: ${{ matrix.runner }}
     steps:
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
       - name: Checkout repository
         uses: actions/checkout@v2
+      - name: Build Docker image
+        run: |
+          docker build -t pnpm-image:latest ./images/${{ matrix.tag }}
+      - name: Building Sample Application
+        run: |
+          docker build -f ./sample-app/Dockerfile ./sample-app/next-app
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+      - name: Push Docker Image
+        run: |
+          if [ ${{ matrix.runner }} == "ubuntu-24.04" ]; then
+            export ARCH=amd64;
+          elif [ ${{ matrix.runner }} == "ubuntu-24.04-arm" ]; then
+            export ARCH=arm64;
+          else
+            echo "Unknown runner";
+            exit 1;
+          fi
+          docker tag pnpm-image:latest ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}-$ARCH
+          docker push ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}-$ARCH
+          echo "digest=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}-$ARCH)"
+  create-manifest:
+    needs: ["find-changed-dirs", "build-test-push-images"]
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        tag: ${{ fromJson(needs.find-changed-dirs.outputs.tags) }}
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
         with:
-          push: true
-          tags: shion1305/pnpm:${{ matrix.tag }}
-          context: ./images/${{ matrix.tag }}
-          platforms: linux/amd64,linux/arm64
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+      - name: Create manifest
+        run:    |
+          docker manifest create ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }} \
+            ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}-amd64 \
+            ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}-arm64
+          docker manifest push ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}
