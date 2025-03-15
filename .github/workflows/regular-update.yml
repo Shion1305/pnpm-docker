@@ -1,0 +1,37 @@
+name: Check for updates
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/regular-update.yml'
+jobs:
+  check-for-updates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ./go.mod
+          cache: true
+      - name: Check for updates
+        run: |
+          go run ./cmd/generate-tags/main.go
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GH_PAT }}
+          commit-message: "Update images from node releases"
+          title: "🤖 [CI] Updates in images"
+          body: "This PR updates the images to reflect the latest node releases."
+          branch: "ci-auto-update"
+          base: "main"
+          author: "Automation By Shion1305<bot@github.shion.pro>"
+          labels: "automated-updates"
+          assignees: "Shion1305"
+          reviewers: "Shion1305"
+          signoff: true
