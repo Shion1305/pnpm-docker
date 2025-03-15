@@ -31,6 +31,14 @@ jobs:
           password: ${{ secrets.DOCKER_TOKEN }}
       - name: Push Docker Image
         run: |
-          docker tag pnpm-image:latest ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}-${{ matrix.runner }}
+          if [ "ubuntu-24.04" == "ubuntu-24.04" ]; then
+            export ARCH=amd64;
+          elif [ "ubuntu-24.04" == "ubuntu-24.04-arm" ]; then
+            export ARCH=arm64;
+          else
+            echo "Unknown runner";
+            exit 1;
+          fi
+          docker tag pnpm-image:latest ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}-$ARCH
           docker push ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}-${{ matrix.runner }}
           echo "digest=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}-${{ matrix.runner }})"
