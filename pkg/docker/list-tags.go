@@ -10,11 +10,7 @@ import (
 const dockerHubAPI = "https://hub.docker.com/v2"
 
 type (
-	DigestInfo struct {
-		ARM64 string `json:"arm64"`
-		AMD64 string `json:"amd64"`
-	}
-	TagDigestMap map[string]DigestInfo
+	TagDigestMap map[string]string
 	TagList      struct {
 		Count    int    `json:"count"`
 		Next     string `json:"next"`
@@ -61,16 +57,7 @@ func ListImageDigests(repository string) (TagDigestMap, error) {
 			return nil, fmt.Errorf("failed to decode response: %v", err)
 		}
 		for _, t := range tagList.Results {
-			d := DigestInfo{}
-			for _, img := range t.Images {
-				switch img.Architecture {
-				case "amd64":
-					d.AMD64 = img.Digest
-				case "arm64":
-					d.ARM64 = img.Digest
-				}
-			}
-			tagMap[t.Name] = d
+			tagMap[t.Name] = t.Images[0].Digest
 		}
 		if tagList.Next == "" {
 			break
