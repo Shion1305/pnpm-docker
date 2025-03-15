@@ -28,7 +28,7 @@ func tagCompatible(tag string) bool {
 		return false
 	}
 	majorVer, _ := strconv.Atoi(rg.FindString(tag))
-	if majorVer < 22 {
+	if majorVer < 23 {
 		return false
 	}
 	return true
