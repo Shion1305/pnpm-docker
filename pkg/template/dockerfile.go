@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 )
 
 const templateFilePath = "./template/Dockerfile"
 
 type TemplateData struct {
-	NodeTag string
+	NodeTag            string
+	RequireWgetInstall bool
 }
 
 func GenDockerfile(nodeTag, digest string) error {
@@ -19,8 +21,8 @@ func GenDockerfile(nodeTag, digest string) error {
 	if err != nil {
 		return fmt.Errorf("error parsing template file: %v", err)
 	}
-
-	data := TemplateData{NodeTag: nodeTag}
+	wgetInstall := strings.Contains(nodeTag, "slim")
+	data := TemplateData{NodeTag: nodeTag, RequireWgetInstall: wgetInstall}
 	outputDir := filepath.Join("./images", nodeTag)
 	err = os.MkdirAll(outputDir, 0755)
 	if err != nil {
