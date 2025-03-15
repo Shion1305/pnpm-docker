@@ -61,7 +61,7 @@ jobs:
   build-test-images:
     needs: find-changed-dirs
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         tag: ${{ fromJson(needs.find-changed-dirs.outputs.tags) }}
         runner: ["ubuntu-24.04", "ubuntu-24.04-arm"]
