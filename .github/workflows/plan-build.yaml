@@ -1,4 +1,4 @@
-name: "Build and push pnpm image"
+name: "Plan building pnpm image"
 on:
   pull_request:
     paths:
