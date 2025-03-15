@@ -21,10 +21,16 @@ jobs:
         BEFORE_COMMIT=$(git rev-parse origin/main)
         CURRENT_COMMIT=${{ github.sha }}
         # Get the list of changed directories under the images folder
-        CHANGED_DIRS=$(git diff --name-only $BEFORE_COMMIT $CURRENT_COMMIT | grep '^images/' | cut -d/ -f2 | sort | uniq)
+        CHANGED_DIRS=$(git diff --name-only "$BEFORE_COMMIT" "$CURRENT_COMMIT" \
+          | grep '^images/' \
+          | cut -d/ -f2 \
+          | sort \
+          | uniq)
         echo "Changed directories: $CHANGED_DIRS"
-        # Convert the list to JSON array format
-        EXISTING_DIRS=$(find images -type d -mindepth 1 -maxdepth 1 | cut -d/ -f2 | sort | uniq)
+        EXISTING_DIRS=$(find images -mindepth 1 -maxdepth 1 -type d \
+          | cut -d/ -f2 \
+          | sort \
+          | uniq)
         FILTERED_DIRS=$(comm -12 <(echo "$CHANGED_DIRS") <(echo "$EXISTING_DIRS"))
         TAGS=$(printf '%s\n' "$FILTERED_DIRS" | jq -R . | jq -sc .)
         echo "tags=$TAGS"
