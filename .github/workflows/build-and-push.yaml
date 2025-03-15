@@ -40,8 +40,8 @@ jobs:
             exit 1;
           fi
           docker tag pnpm-image:latest ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}-$ARCH
-          docker push ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}-${{ matrix.runner }}
-          echo "digest=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}-${{ matrix.runner }})"
+          docker push ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}-$ARCH
+          echo "digest=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ vars.DOCKERHUB_USERNAME }}/pnpm:${{ matrix.tag }}-$ARCH)"
   create-manifest:
     needs: build-test-push-images
     runs-on: ubuntu-24.04
