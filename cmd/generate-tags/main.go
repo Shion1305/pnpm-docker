@@ -15,20 +15,21 @@ func main() {
 
 	for k, v := range digests {
 		//	if k does not contain numbers
-		if !tagCompatible(k) {
+		if !TagCompatible(k) {
 			continue
 		}
 		template.GenDockerfile(k, v)
 	}
 }
 
-func tagCompatible(tag string) bool {
-	rg := regexp.MustCompile(`^(\d+)`)
-	if !rg.MatchString(tag) {
+func TagCompatible(tag string) bool {
+	rg := regexp.MustCompile(`^(\d{2})(-.+)?$`)
+	m := rg.FindStringSubmatch(tag)
+	if m == nil {
 		return false
 	}
-	majorVer, _ := strconv.Atoi(rg.FindString(tag))
-	if majorVer < 23 {
+	majorVer, _ := strconv.Atoi(m[1])
+	if majorVer < 22 {
 		return false
 	}
 	return true
