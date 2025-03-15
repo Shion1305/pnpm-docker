@@ -36,7 +36,6 @@ jobs:
           echo "tags=$TAGS"
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
   build-images:
-    runs-on: ubuntu-latest
     needs: find-changed-dirs
     strategy:
       max-parallel: 2
