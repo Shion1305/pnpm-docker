@@ -40,6 +40,7 @@ jobs:
         echo "tags=$TAGS" >> $GITHUB_OUTPUT
   build-test-push-images:
     needs: find-changed-dirs
+    if: ${{ needs.find-changed-dirs.outputs.tags != '[]' }}
     strategy:
       fail-fast: false
       matrix:
