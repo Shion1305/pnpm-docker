@@ -31,7 +31,11 @@ jobs:
           | sort \
           | uniq)
         FILTERED_DIRS=$(comm -12 <(echo "$CHANGED_DIRS") <(echo "$EXISTING_DIRS"))
-        TAGS=$(printf '%s\n' "$FILTERED_DIRS" | jq -R . | jq -sc .)
+        if [ -z "$FILTERED_DIRS" ]; then
+          TAGS="[]"
+        else
+          TAGS=$(printf '%s\n' "$FILTERED_DIRS" | jq -R . | jq -sc .)
+        fi
         echo "tags=$TAGS"
         echo "tags=$TAGS" >> $GITHUB_OUTPUT
   build-test-push-images:
