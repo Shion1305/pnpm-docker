@@ -1,4 +1,4 @@
-FROM node:21-bullseye
+FROM node:25-bullseye
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
